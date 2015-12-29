@@ -7,7 +7,196 @@
 
 #include<stdio.h>
 #include<gumbo.h>
+#include"myfiledeal.h"
 
+void add_WebData(char* name, char* url, Rule* rule)
+{
+   
+
+}
+
+void read_feather(char* filename, WebData** wd)
+{
+   FILE* fp;
+   char* line = NULL;
+   size_t len = 0;
+   ssize_t read;
+
+   fp = fopen(filename, "r");
+   if(!fp)
+   {
+	  exit(EXIT_FAILURE);
+   }
+
+
+   while((read = getline(&line, &len, fp)) != -1)
+   {
+
+	  char tempname[200];
+	  bzero(tempname, sizeof(tempname));
+	  char tempurl[200];
+	  bzero(tempurl, sizeof(tempurl));
+	  char tempcss[200];
+	  bzero(tempcss, sizeof(tempcss));
+	  char *end = NULL;
+	  end = line;
+	  //find name
+	  int i = 0;
+	  while(*end && *end != ' ' && *end != '\t')
+	  {
+		 tempname[i++] = *end++;
+	  } 
+	  tempname[i] = '\0';
+	  //find url
+	  i = 0;
+	  while(*end && *end != ' ' && *end != '\t')
+	  {
+		 tempurl[i++] = *end++;
+	  }
+	  tempurl[i] = '\0';
+	  //find css
+	  i = 0;
+	  while(*end)
+	  {
+		 tempcss[i++] = *end++;
+	  }
+	  tempcss[i] = '\0';
+
+	  
+	  
+
+
+   }
+}
+
+void tran_css_to_Rule(char* strrule, Rule** rule)
+{
+   //去掉括号
+   de_space(strrule);
+
+   char part1[100];
+   bzero(part1, sizeof(part1));
+   char part2[100];
+   bzero(part2, sizeof(part2));
+
+   int index1 = 0, index2 = 0;
+   char* p = strrule;
+   while(*p && *p != '>')
+   {
+	  part1[index1++] = *p++;
+   }
+   part1[index1] = '\0';
+   //if(part2 exist)
+   p++;
+   if(*p)
+   {
+	  while(*p)
+	  {
+		 part2[index2++] = *p++;
+	  }
+   }
+   part2[index2] = '\0';
+   //put part1 to rule
+   p = &part1[0];
+   char tempcssname[50];
+   bzero(tempcssname, sizeof(tempcssname));
+   int index = 0;
+   //put name to part1
+   while(*p && *p != '.' && *p != '#' && *p != ':')
+   {
+	  tempcssname[index++] ;  
+	  p++;
+   }
+   tempcssname[index] = '\0';
+   //fill part1's id & cls
+   char tempcls[50];
+   bzero(tempcls, sizeof(tempcls));
+   char tempid[50];
+   bzero(tempid, sizeof(tempid));
+   char tempeq[50];
+   bzero(tempeq, sizeof(tempeq));
+   switch(*p)
+   {
+	  case '.':
+		 //id一定在前,此项无id
+		 index = 0;
+		 p++;
+		 while(*p && *p != ':')
+		 {
+			tempcls[index++] = *p++;
+		 }
+		 tempcls[index] = '\0';
+		 index = 0;
+		 if(*p)
+		 {//肯定为eq值
+			index = 0;
+			while(*p)
+			{
+			   tempeq[index++] = *p++;
+			}
+			tempeq[index] = '\0';
+			
+		 }
+		 break; 
+	  case '#':
+		 //后面都是 id 接着可能出现 cls
+		 index = 0;
+		 p++;
+		 while(*p && *p != '.' && *p != ':')
+		 {
+			tempid[index++] = *p++;
+		 }
+		 tempid[index] = '\0';
+		 if(*p == '.')
+		 {//后面有cls
+			index = 0;
+			while(*p && *p != ':')
+			{
+			   tempcls[index++] = *p++;
+			}
+			tempcls[index] = '\0';
+
+		 }
+		 if(*p)
+		 {//肯定为eq
+			index = 0;
+			while(*p)
+			{
+			   tempeq[index++] = *p++;
+			}
+			tempcls[index] = '\0';
+				
+		 }
+		 break;
+	  case ':':
+		 //读完序号之后去读eq 序号
+		 index = 0;
+		 //不含 id cls 只含 eq的情况
+		 while(*p)
+		 {
+			tempeq[index++] = *p++;
+		 }
+		 tempeq[index] = '\0';
+		 break;
+	  case '\0';
+		 //只含有 name
+		 break;
+   }
+   *rule = NULL;
+   *rule = (Rule*)malloc(sizeof(Rule));
+   bzero(*rule, sizeof(Rule));
+   
+
+   //put part2 to rule
+   
+
+}
+
+void add_rule(char* name, char* id, char* cls, int eq, Rule** rule)
+{
+   Rule* s;	  
+
+}
 
 void searh_for_links(GumboNode* node, char** hrefArr)
 {
@@ -36,7 +225,7 @@ void searh_for_links(GumboNode* node, char** hrefArr)
    }
 }
 
-int de_space_beg_end(char* line)
+int de_space(char* line)
 {
    if(!line)
    {
@@ -44,24 +233,20 @@ int de_space_beg_end(char* line)
    }
 
    char* p = line;
-   char* beg = NULL;
+   char* beg = line;
    while(*p)
    {
-	  if(beg && *p != ' ')
+	  if(*p == ' ')
 	  {
-		 beg = p;
-		 break;
+		 p++;
+		 continue;
 	  }
-	  p++;
+	  else
+	  {
+		 *beg = *p;
+	  }
    }
-
-   char* q = line;
-   while(*p = '\0')
-   {
-	  *q = *p;
-	  p++;
-   }
-   *p = '\0';
+   *beg = '\0';
 
 }
 
@@ -83,7 +268,7 @@ void read_rule(char* filename, char** rule)
    while((read = getline(&line, &len, fp)) = -1)
    {
 	  //deal line to Rule
-	  
+
 	  //initial deal to line
 
 	  break;
@@ -101,7 +286,7 @@ void find_node_by_css(GumboNode* node, char* path)
 
 void output_href(char* htmls)
 {
-   
+
 }
 
 int test_write_end(char* str)
